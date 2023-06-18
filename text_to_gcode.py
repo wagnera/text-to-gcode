@@ -26,8 +26,8 @@ class Instr:
 	def __repr__(self):
 		return "G%d X%.2f Y%.2f" % (self.type.value[0], self.x, self.y)
 
-	def translated(self, x, y):
-		return Instr(self.type, self.x + x, self.y + y)
+	def translated_scaled(self, x, y, s):
+		return Instr(self.type, (self.x * s) + x, (self.y * s) + y)
 
 class Letter:
 	def __init__(self, *args):
@@ -48,8 +48,8 @@ class Letter:
 	def __repr__(self):
 		return "\n".join([repr(instr) for instr in self.instructions]) + "\n"
 
-	def translated(self, x, y):
-		return Letter([instr.translated(x, y) for instr in self.instructions], self.width)
+	def translated_scaled(self, x, y, s):
+		return Letter([instr.translated_scaled(x, y, s) for instr in self.instructions], (self.width * s))
 
 
 def readLetters(directory):
@@ -65,13 +65,14 @@ def readLetters(directory):
 			letters[letterRepr] = letter
 	return letters
 
-def textToGcode(letters, text, lineLength, lineSpacing, padding):
+def textToGcode(letters, text, lineLength, lineSpacing, padding, height):
 	# used for fast string concatenation
 	gcodeLettersArray = []
 
 	offsetX, offsetY = 0, 0
+	scale = height / 6.0
 	for char in text:
-		letter = letters[char].translated(offsetX, offsetY)
+		letter = letters[char].translated_scaled(offsetX, offsetY, scale)
 		gcodeLettersArray.append(repr(letter))
 
 		offsetX += letter.width + padding
@@ -99,6 +100,8 @@ def parseArgs(namespace):
 		help="Maximum length of a line")
 	argParser.add_argument("-s", "--line-spacing", type=float, default=8.0,
 		help="Distance between two subsequent lines")
+	argParser.add_argument("-x", "--letter-height", type=float, default=6.0,
+		help="Height of letters")
 	argParser.add_argument("-p", "--padding", type=float, default=1.5,
 		help="Empty space between characters")
 
@@ -110,7 +113,7 @@ def main():
 
 	letters = readLetters(Args.gcode_directory)
 	data = Args.input.read()
-	gcode = textToGcode(letters, data, Args.line_length, Args.line_spacing, Args.padding)
+	gcode = textToGcode(letters, data, Args.line_length, Args.line_spacing, Args.padding, Args.letter_height)
 	Args.output.write(gcode)
 
 
