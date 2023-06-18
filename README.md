@@ -37,5 +37,5 @@ The required parameters are the input, the output and the line length (in order 
 
 An example of command is:
 ```sh
-python3 --input input.txt --output output.nc --line-length 300 --line-spacing 10 --padding 3
+python3 text_to_gcode.py --input input.txt --output output.nc --line-length 300 --line-spacing 10 --padding 3 --letter-height 5.0
 ```
